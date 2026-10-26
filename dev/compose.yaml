@@ -1,0 +1,94 @@
+# Local development stack: authentik (login for scuba) + NetBird (what scuba manages).
+# DEV ONLY — fixed credentials, plain HTTP, no hardening.
+#
+#   docker compose -f dev/compose.yaml up -d
+#   dev/setup.sh              # one-time: creates the NetBird owner + API token, writes dev/scuba.env
+#
+# See dev/README.md.
+
+name: scuba-dev
+
+services:
+  # ---- authentik ------------------------------------------------------------------------
+  authentik-db:
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: authentik
+      POSTGRES_USER: authentik
+      POSTGRES_PASSWORD: authentik-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d authentik -U authentik"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - authentik-db:/var/lib/postgresql/data
+
+  authentik-server: &authentik
+    image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.8.5}
+    restart: unless-stopped
+    command: server
+    depends_on:
+      authentik-db: { condition: service_healthy }
+    environment: &authentik-env
+      AUTHENTIK_POSTGRESQL__HOST: authentik-db
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: authentik-dev
+      AUTHENTIK_SECRET_KEY: dev-only-not-secret-y4flV1sjOsW5R9Is5OTRfr0OZnzqQyFQSKpKFpeqGgkV7Sd3ke6g
+      AUTHENTIK_DISABLE_UPDATE_CHECK: "true"
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+      # first-start admin ("akadmin"); the NetBird owner uses the same email so scuba can link them
+      AUTHENTIK_BOOTSTRAP_EMAIL: admin@example.com
+      AUTHENTIK_BOOTSTRAP_PASSWORD: admin
+      AUTHENTIK_BOOTSTRAP_TOKEN: dev-bootstrap-token
+      # consumed by the blueprint in ./authentik/blueprints
+      SCUBA_URL: ${SCUBA_URL:-http://localhost:3000}
+      SCUBA_OIDC_CLIENT_SECRET: ${SCUBA_OIDC_CLIENT_SECRET:-scuba-dev-client-secret}
+    ports:
+      - "9000:9000"
+    shm_size: 256mb
+    volumes:
+      - ./authentik/blueprints:/blueprints/custom:ro
+
+  authentik-worker:
+    <<: *authentik
+    command: worker
+    ports: []
+    environment: *authentik-env
+    user: root
+    volumes:
+      - ./authentik/blueprints:/blueprints/custom:ro
+
+  # ---- NetBird (combined server: management + signal + relay + STUN; embedded login) ---
+  netbird-server:
+    image: netbirdio/netbird-server:${NETBIRD_TAG:-latest}
+    restart: unless-stopped
+    command: ["--config", "/etc/netbird/config.yaml"]
+    environment:
+      NB_SETUP_PAT_ENABLED: "true" # lets dev/setup.sh mint the first API token
+    ports:
+      - "3478:3478/udp"
+    volumes:
+      - netbird-data:/var/lib/netbird
+      - ./netbird/config.yaml:/etc/netbird/config.yaml:ro
+
+  netbird-dashboard:
+    image: netbirdio/dashboard:${NETBIRD_DASHBOARD_TAG:-latest}
+    restart: unless-stopped
+    env_file: ./netbird/dashboard.env
+
+  # One origin for everything NetBird (dashboard, REST API, OIDC, gRPC, relay): http://localhost:8080
+  netbird-edge:
+    image: docker.io/library/caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [netbird-server, netbird-dashboard]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./netbird/Caddyfile:/etc/caddy/Caddyfile:ro
+
+volumes:
+  authentik-db:
+  netbird-data:

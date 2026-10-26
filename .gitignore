@@ -1,0 +1,14 @@
+.direnv
+/target
+
+
+# Added by cargo
+#
+# already existing elements were commented out
+
+#/target
+
+# local dev
+/dev/scuba.env
+/dev/scuba.db*
+/scuba.db*

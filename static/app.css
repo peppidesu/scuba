@@ -1,0 +1,595 @@
+/* scuba — compact, functional, lightweight.
+ *
+ * CUSTOMIZATION: everything visual is driven by the custom properties in :root below.
+ * Override any of them in a later stylesheet (or inline on <html>), e.g.
+ *     :root { --radius: 0; --text-size: 14px; --accent: light-dark(#a33, #e77); }
+ * Colours use light-dark(); force a scheme with <html data-theme="light|dark">.
+ */
+
+:root {
+    color-scheme: light dark;
+
+    /* type */
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --text-size: 16px;
+    --line-height: 1.4;
+
+    /* shape & density */
+    --radius: 2px;            /* "very slightly rounded" */
+    --gap: 10px;               /* spacing unit between blocks */
+    --pad-x: 10px;             /* horizontal padding in cells/controls */
+    --pad-y: 5px;             /* vertical padding in cells/controls */
+    --control-height: 32px;
+    --border-width: 1px;
+    --content-width: 960px;
+
+    /* colour */
+    --bg:         light-dark(#f6f7f8, #14161a);
+    --surface:    light-dark(#ffffff, #1b1e23);
+    --surface-2:  light-dark(#eef0f2, #23272d);   /* table head, hover */
+    --border:     light-dark(#d3d7dc, #333840);
+    --text:       light-dark(#1d2025, #dde1e6);
+    --muted:      light-dark(#667080, #8c95a1);
+    --accent:     light-dark(#1f5fbf, #5b9cf0);
+    --accent-text:light-dark(#ffffff, #0d1117);
+    --ok:         light-dark(#1d7a3d, #4fbf71);
+    --warn:       light-dark(#9a6700, #d9a441);
+    --danger:     light-dark(#b42318, #f0706a);
+}
+
+[data-theme="light"] {
+    color-scheme: light;
+}
+
+[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+
+/* ---- base ---- */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    font: var(--text-size)/var(--line-height) var(--font);
+    background: var(--bg);
+    color: var(--text);
+}
+
+body {
+    margin: 0;
+}
+
+a {
+    color: var(--accent);
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+h1 {
+    font-size: 1.35em;
+    margin: 0 0 var(--gap);
+}
+
+h2 {
+    font-size: 1.05em;
+    margin: 0;
+}
+
+p {
+    margin: 0 0 var(--gap);
+}
+
+code,
+.mono {
+    font-family: var(--font-mono);
+    font-size: .95em;
+}
+
+.muted {
+    color: var(--muted);
+}
+
+:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 0px;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+
+/* ---- layout ---- */
+
+.topbar {
+    background: var(--surface);
+    border-bottom: var(--border-width) solid var(--border);
+}
+
+.topbar-inner {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap; /* on very narrow screens the user box moves to a second row */
+    gap: 0 calc(var(--gap) * 2);
+    max-width: var(--content-width);
+    min-height: 36px;
+    margin: 0 auto;
+    padding: 0 var(--gap);
+}
+
+.brand {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.brand:hover {
+    text-decoration: none;
+}
+
+.nav {
+    display: flex;
+    gap: 2px;
+}
+
+.nav a {
+    color: var(--muted);
+    padding: var(--pad-y) var(--pad-x);
+    border-radius: var(--radius);
+}
+
+.nav a:hover {
+    background: var(--surface-2);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.nav a[aria-current="page"] {
+    color: var(--text);
+    background: var(--surface-2);
+    font-weight: 600;
+}
+
+.userbox {
+    display: flex;
+    align-items: center;
+    gap: var(--gap);
+    margin-left: auto;
+    color: var(--muted);
+}
+
+.userbox form {
+    margin: 0;
+}
+
+/* Long names shorten with an ellipsis instead of pushing the button out of the bar. */
+.userbox span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.userbox .btn {
+    white-space: nowrap;
+}
+
+/* Phones: keep the nav and the log-out button, drop the name. */
+@media (max-width: 600px) {
+    .topbar-inner {
+        gap: 0 var(--gap);
+    }
+
+    .userbox span {
+        display: none;
+    }
+}
+
+/* Very small phones: the wordmark makes way too, so the nav and log-out fit on one line. */
+@media (max-width: 480px) {
+    .brand {
+        display: none;
+    }
+}
+
+main {
+    max-width: var(--content-width);
+    margin: 0 auto;
+    padding: calc(var(--gap) * 2) var(--gap);
+}
+
+
+/* ---- panel ---- */
+
+.panel {
+    background: var(--surface);
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: calc(var(--gap));
+}
+
+.panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap);
+    min-height: var(--control-height);
+    padding: var(--pad-y) var(--pad-x);
+    border-bottom: var(--border-width) solid var(--border);
+}
+
+.panel-body {
+    padding: var(--gap);
+}
+
+.panel-body.flush {
+    padding: 0;
+    overflow-x: auto; /* a table wider than the screen scrolls inside its panel */
+}
+
+
+/* ---- table ---- */
+
+table.data {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data th,
+.data td {
+    text-align: left;
+    vertical-align: middle;
+    padding: var(--pad-y) var(--pad-x);
+}
+
+.data th {
+    font-weight: 600;
+    font-size: .9em;
+    color: var(--muted);
+    background: var(--surface-2);
+    border-bottom: var(--border-width) solid var(--border);
+    white-space: nowrap;
+}
+
+.data td {
+    border-bottom: var(--border-width) solid var(--border);
+}
+
+.data tr:last-child td {
+    border-bottom: 0;
+}
+
+.data tbody tr:hover {
+    background: var(--surface-2);
+}
+
+.data .actions {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.data .shrink {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.empty {
+    padding: var(--gap);
+    color: var(--muted);
+    text-align: center;
+}
+
+
+/* ---- buttons ---- */
+
+.btn {
+    font: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: var(--control-height);
+    padding: 0 var(--pad-x);
+    cursor: pointer;
+    color: var(--text);
+    background: var(--surface);
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius);
+}
+
+.btn:hover {
+    background: var(--surface-2);
+    text-decoration: none;
+}
+
+.btn:disabled {
+    opacity: .5;
+    cursor: default;
+}
+
+.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-text);
+}
+
+.btn-primary:hover {
+    background: var(--accent);
+    filter: brightness(1.08);
+}
+
+.btn-danger {
+    color: var(--danger);
+}
+
+.btn-danger:hover {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: var(--accent-text);
+}
+
+.btn-sm {
+    height: calc(var(--control-height) - 6px);
+    padding: 0 calc(var(--pad-x) - 2px);
+    font-size: .92em;
+}
+
+
+/* ---- forms ---- */
+
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="password"],
+select {
+    font: inherit;
+    height: var(--control-height);
+    min-width: 0;
+    padding: 0 var(--pad-x);
+    color: var(--text);
+    background: var(--surface);
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius);
+}
+
+input::placeholder {
+    color: var(--muted);
+}
+
+input[aria-invalid="true"] {
+    border-color: var(--danger);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0; /* lets inputs shrink on narrow screens instead of overflowing */
+}
+
+.field > label,
+legend {
+    font-size: .9em;
+    color: var(--muted);
+}
+
+.field .hint {
+    font-size: .9em;
+    color: var(--muted);
+}
+
+.field .error {
+    font-size: .9em;
+    color: var(--danger);
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--gap);
+    margin: 0;
+}
+
+.form-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    max-width: 28em;
+    margin: 0;
+}
+
+.form-stack > .btn {
+    align-self: flex-start;
+}
+
+fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+legend {
+    padding: 0;
+    margin-bottom: 2px;
+}
+
+/* input with fixed text after it, e.g. ".reef" */
+.input-suffix {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.input-suffix input {
+    flex: 1;
+    min-width: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-suffix span {
+    display: inline-flex;
+    align-items: center;
+    height: var(--control-height);
+    padding: 0 var(--pad-x);
+    color: var(--muted);
+    background: var(--surface-2);
+    font-family: var(--font-mono);
+    border: var(--border-width) solid var(--border);
+    border-left: 0;
+    border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+
+/* ---- checkboxes: real inputs, restyled to follow the theme tokens ---- */
+
+input[type="checkbox"] {
+    appearance: none;
+    flex: none;
+    display: inline-grid;
+    place-content: center;
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    cursor: pointer;
+    background: var(--surface);
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius);
+}
+
+/* the tick */
+input[type="checkbox"]::after {
+    content: "";
+    width: 7px;
+    height: 4px;
+    margin-top: -2px;
+    opacity: 0;
+    border: 2px solid var(--accent-text);
+    border-top: 0;
+    border-right: 0;
+    transform: rotate(-45deg);
+}
+
+input[type="checkbox"]:hover {
+    border-color: var(--accent);
+}
+
+input[type="checkbox"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+input[type="checkbox"]:checked::after {
+    opacity: 1;
+}
+
+input[type="checkbox"]:disabled {
+    opacity: .5;
+    cursor: default;
+}
+
+.checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px calc(var(--gap) * 2);
+}
+
+.checks label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 22px;
+    color: var(--text);
+    cursor: pointer;
+}
+
+
+/* ---- small things ---- */
+
+.badge {
+    display: inline-block;
+    padding: 0 5px;
+    font-size: .88em;
+    line-height: 1.5;
+    color: var(--muted);
+    white-space: nowrap;
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius);
+}
+
+.badge-ok {
+    color: var(--ok);
+    border-color: currentColor;
+}
+
+.badge-warn {
+    color: var(--warn);
+    border-color: currentColor;
+}
+
+.badge-danger {
+    color: var(--danger);
+    border-color: currentColor;
+}
+
+.chips {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+.dot {
+    display: inline-block;
+    width: .6em;
+    height: .6em;
+    margin-right: 5px;
+    background: var(--muted);
+    border-radius: 50%;
+}
+
+.dot-on {
+    background: var(--ok);
+}
+
+/* a dot with its label, kept on one line */
+.status {
+    white-space: nowrap;
+}
+
+.notice {
+    margin-bottom: var(--gap);
+    padding: var(--pad-y) var(--pad-x);
+    background: var(--surface);
+    border: var(--border-width) solid var(--border);
+    border-left-width: 3px;
+    border-radius: var(--radius);
+}
+
+.notice-ok {
+    border-left-color: var(--ok);
+}
+
+.notice-warn {
+    border-left-color: var(--warn);
+}
+
+.notice-danger {
+    border-left-color: var(--danger);
+}
+
+
+/* ---- htmx ---- */
+
+.htmx-request {
+    opacity: .6;
+    transition: opacity 150ms;
+}
